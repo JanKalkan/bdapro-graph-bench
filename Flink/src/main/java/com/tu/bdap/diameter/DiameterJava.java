@@ -31,7 +31,7 @@ public class DiameterJava {
                 .map(new MapFunction<String, Tuple2<Long,Long>>(){
                     @Override
                     public Tuple2<Long, Long> map(String value) throws Exception {
-                        String[] s =value.split(",");
+                        String[] s =value.split(" ");
                         return new Tuple2<>(Long.parseLong(s[0]),Long.parseLong(s[1]));
                     }
                 });
@@ -56,8 +56,10 @@ public class DiameterJava {
                     }
                 });
 
-        graph = graph.runVertexCentricIteration(new ComputeDiameter(), new CombineDiameter(), 20 );
+        //graph = graph.runVertexCentricIteration(new ComputeDiameter(), new CombineDiameter(), 20 );
         graph.getVertices().print();
+        graph.getVertices().print();
+
         env.execute("Diamater");
     }
     public static final class ComputeDiameter extends ComputeFunction<Long, Tuple4<Long,Long,Long,Integer>, NullValue, Tuple4<Long,Long,Long,Integer>> {
