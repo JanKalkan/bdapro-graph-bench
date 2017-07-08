@@ -1,4 +1,4 @@
-package Graphs;
+package com.tu.bdap.diameter;
 
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.java.DataSet;
@@ -23,10 +23,11 @@ import static java.lang.Math.pow;
  */
 public class DiameterJava {
     public static void main(String[] args) throws Exception {
+
+        int x =lowestZero(6L);
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
-
-        DataSet<Tuple2<Long,Long>> edges = env.readTextFile("/home/simon/GraphAls/src/main/scala/Graphs/nodes.csv")
+        DataSet<Tuple2<Long,Long>> edges = env.readTextFile(args[0])
                 .map(new MapFunction<String, Tuple2<Long,Long>>(){
                     @Override
                     public Tuple2<Long, Long> map(String value) throws Exception {
@@ -35,33 +36,36 @@ public class DiameterJava {
                     }
                 });
 
-        int k =20;
-        Graph graph = Graph.fromTuple2DataSet(edges,env)
-                .mapVertices(new MapFunction<Vertex<Long,NullValue>, Tuple4<Long,Long,Long,Integer>>() {
+
+        Graph graph = Graph.fromTuple2DataSet(edges,env);
+        final long k = graph.getVertices().count();
+        graph = graph.mapVertices(new MapFunction<Vertex<Long,NullValue>, Tuple4<Long,Long,Long,Integer>>() {
                     @Override
                     public Tuple4 map(Vertex<Long, NullValue> value) throws Exception {
                         Random r = new Random();
                         Long s1 = 0L;
                         Long s2 = 0L;
                         Long s3 = 0L;
-                        for (int i = 0; i<=20; i++){
-                            if (r.nextDouble()<= pow(2,-(i+1))) s1= s1 | ((int)pow(2,i));
-                            if (r.nextDouble()<= pow(2,-(i+1))) s2= s2 | ((int)pow(2,i));
-                            if (r.nextDouble()<= pow(2,-(i+1))) s3= s3 | ((int)pow(2,i));
+                        for (int i = 0; i<=k; i++){
+                            if (r.nextDouble()<= pow(2,-(i+1))) s1= s1 | ((long)pow(2,i));
+                            if (r.nextDouble()<= pow(2,-(i+1))) s2= s2 | ((long)pow(2,i));
+                            if (r.nextDouble()<= pow(2,-(i+1))) s3= s3 | ((long)pow(2,i));
                         }
+
                         return new Tuple4(s1,s2,s3,0);
                     }
                 });
 
+        graph = graph.runVertexCentricIteration(new ComputeDiameter(), new CombineDiameter(), 20 );
         graph.getVertices().print();
-        graph.runVertexCentricIteration(new ComputeDiameter(), new CombineDiameter(), 20 )
-        .getVertices().print();
+        env.execute("Diamater");
     }
     public static final class ComputeDiameter extends ComputeFunction<Long, Tuple4<Long,Long,Long,Integer>, NullValue, Tuple4<Long,Long,Long,Integer>> {
 
+        double e = 0.01;
         public void compute(Vertex<Long, Tuple4<Long, Long, Long, Integer>> vertex, MessageIterator<Tuple4<Long, Long, Long, Integer>> messages) {
 
-            Tuple4<Long, Long, Long, Integer> vert = vertex.getValue().copy();
+            Tuple4<Long, Long, Long, Integer> vert = vertex.getValue();
             Long s0 = vert.f0;
             Long s1 = vert.f1;
             Long s2 = vert.f2;
@@ -73,13 +77,23 @@ public class DiameterJava {
                 s2 = s2 | msg.f2;
                 diam = Math.max(diam,msg.f3);
             }
+            double lowestBitOld = (lowestZero(vert.f0)+lowestZero(vert.f1)+lowestZero(vert.f2))/3;
+            double lowestBitNew = (lowestZero(s0)+lowestZero(s1)+lowestZero(s2))/3;
 
-            setNewVertexValue(new Tuple4<>(s0,s1,s2,diam));
+            double N_old = pow(2,lowestBitOld)/0.77351;
+            double N_new = pow(2,lowestBitNew)/0.77351;
+
+            if(N_new >= N_old*(1+e) || diam ==0){
+                setNewVertexValue(new Tuple4<>(s0,s1,s2,diam+1));
                 for (Edge<Long, NullValue> e : getEdges()) {
                     sendMessageTo(e.getTarget(), vertex.getValue().copy());
                 }
             }
+
         }
+
+
+    }
 
     public static final class CombineDiameter  extends MessageCombiner<Long, Tuple4<Long, Long, Long, Integer>> {
 
@@ -92,7 +106,14 @@ public class DiameterJava {
                 t.f2 = t.f2 | msg.f2;
                 t.f3 = Math.max(t.f3,msg.f3);
             }
+
             sendCombinedMessage(t);
         }
     }
+    public static int lowestZero(Long bits){
+        Long zero = bits | (bits+1);
+        Long difference = ~(bits & zero);
+        int index = 64 - Long.numberOfLeadingZeros(difference.intValue());
+        return index;
     }
+}
