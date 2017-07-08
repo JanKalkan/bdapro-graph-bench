@@ -9,10 +9,12 @@ import org.apache.spark.graphx.lib.PageRank
 object PageRank_Algorithm {
   def main(args: Array[String]) = {
 
+    val Iterations = 20;
+    val Dampening  = 0.15;
+
     //Start the Spark context
     val conf = new SparkConf()
       .setAppName("PageRank")
-      .setMaster("local")
 
     val sc = new SparkContext(conf)
 
@@ -27,9 +29,7 @@ object PageRank_Algorithm {
     val graph = Graph.fromEdges(file, "defaultProperty")
 
     // Run PageRank
-  // val result = PageRank.run(graph, Integer.MAX_VALUE, 0.001)
-  val result = PageRank.runUntilConvergence(graph, 0.001)
-   
+    val result = PageRank.run(graph, Iterations, Dampening)
 
     // Print the result
     println(result.vertices.collect().mkString("\n"))

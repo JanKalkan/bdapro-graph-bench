@@ -14,7 +14,7 @@ public class PageRank_Algorithm {
 	public static void main(String[] args) throws Exception {
 
         final double DAMPING_FACTOR = 0.15;
-        final int ITERATIONS = 100;
+        final int ITERATIONS = 20;
 
         ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
@@ -33,7 +33,7 @@ public class PageRank_Algorithm {
 
         Graph<String, NullValue,NullValue> graph = Graph.fromTuple2DataSet(edges, env);
 
-        PageRank pageRank = new PageRank(DAMPING_FACTOR,ITERATIONS);
+        PageRank pageRank = new PageRank(DAMPING_FACTOR, ITERATIONS);
 
 
         DataSet<PageRank.Result<String>> result = pageRank.runInternal(graph);
