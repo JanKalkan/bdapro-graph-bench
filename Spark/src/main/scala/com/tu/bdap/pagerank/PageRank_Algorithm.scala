@@ -17,7 +17,7 @@ object PageRank_Algorithm {
     val sc = new SparkContext(conf)
 
     // Load the graph
-    val file = sc.textFile(args(0))
+    val file = sc.textFile("C:/Users/Johannes/Desktop/usa.txt")
       .filter { x => x.startsWith("a") }
       .map { line =>
         val fields = line.split(" ")
@@ -28,10 +28,15 @@ object PageRank_Algorithm {
 
     // Run PageRank
   // val result = PageRank.run(graph, Integer.MAX_VALUE, 0.001)
-  val result = PageRank.runUntilConvergence(graph, 0.001)
+  val result = PageRank.run(graph, 20, 0.001)
    
 
     // Print the result
     println(result.vertices.collect().mkString("\n"))
+    
+    
+    
   }
+  
+  
 }
