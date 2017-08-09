@@ -41,6 +41,7 @@ graph = graph.pregel(Double.PositiveInfinity)(
 
     println(graph.vertices.collect().mkString("\n"))
     // for (name <- rankGraph.vertices.collect()) println(name)
+    //TEST
 
   }
 }
