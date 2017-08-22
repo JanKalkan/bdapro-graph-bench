@@ -17,7 +17,7 @@ public class SSSP_Algorithm {
 		// Create execution environment
 		ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
-		DataSet<Edge<Integer, Double>> edges = env.readTextFile("/home/johannes/Dropbox/BDAPRO_Share/Datasets/ny.txt")
+		DataSet<Edge<Integer, Double>> edges = env.readTextFile("/home/simon/ny.txt")
 				.filter(new FilterFunction<String>() {
 					@Override
 					public boolean filter(String value) throws Exception {
@@ -39,8 +39,8 @@ public class SSSP_Algorithm {
 			}
 		}, env);
 
-		graph.run(new SingleSourceShortestPaths<Integer>(1, 20)).print();;
-
+		Object result =graph.run(new SingleSourceShortestPaths(1, 20));
+		System.out.print(result);
 	}
 
 }

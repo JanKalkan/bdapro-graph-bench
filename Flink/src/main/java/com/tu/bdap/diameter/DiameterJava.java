@@ -1,5 +1,6 @@
 package com.tu.bdap.diameter;
 
+import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
@@ -24,21 +25,27 @@ import static java.lang.Math.pow;
 public class DiameterJava {
     public static void main(String[] args) throws Exception {
 
-        int x =lowestZero(6L);
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
         DataSet<Tuple2<Long,Long>> edges = env.readTextFile(args[0])
+                .filter(new FilterFunction<String>() {
+                    @Override
+                    public boolean filter(String s) throws Exception {
+                        return s.startsWith("a");
+                    }
+                })
                 .map(new MapFunction<String, Tuple2<Long,Long>>(){
                     @Override
                     public Tuple2<Long, Long> map(String value) throws Exception {
                         String[] s =value.split(" ");
-                        return new Tuple2<>(Long.parseLong(s[0]),Long.parseLong(s[1]));
+                        return new Tuple2<>(Long.parseLong(s[1]),Long.parseLong(s[2]));
                     }
                 });
 
 
         Graph graph = Graph.fromTuple2DataSet(edges,env);
-        final long k = graph.getVertices().count();
+        //graph = graph.getUndirected();
+        final long k = 10L;
         graph = graph.mapVertices(new MapFunction<Vertex<Long,NullValue>, Tuple4<Long,Long,Long,Integer>>() {
                     @Override
                     public Tuple4 map(Vertex<Long, NullValue> value) throws Exception {
@@ -55,16 +62,18 @@ public class DiameterJava {
                         return new Tuple4(s1,s2,s3,0);
                     }
                 });
+        //graph.getVertices().print();
 
-        //graph = graph.runVertexCentricIteration(new ComputeDiameter(), new CombineDiameter(), 20 );
-        graph.getVertices().print();
-        graph.getVertices().print();
+        graph = graph.runVertexCentricIteration(new ComputeDiameter(), new CombineDiameter(), 20 );
 
-        env.execute("Diamater");
+        graph.getVertices().print();
+        //graph.getVertices().writeAsText(args[1]);
     }
+
+
     public static final class ComputeDiameter extends ComputeFunction<Long, Tuple4<Long,Long,Long,Integer>, NullValue, Tuple4<Long,Long,Long,Integer>> {
 
-        double e = 0.01;
+        double e = 0.00;
         public void compute(Vertex<Long, Tuple4<Long, Long, Long, Integer>> vertex, MessageIterator<Tuple4<Long, Long, Long, Integer>> messages) {
 
             Tuple4<Long, Long, Long, Integer> vert = vertex.getValue();
@@ -84,15 +93,15 @@ public class DiameterJava {
 
             double N_old = pow(2,lowestBitOld)/0.77351;
             double N_new = pow(2,lowestBitNew)/0.77351;
+            if(N_new > N_old*(1.0+e) || diam ==0){
+                diam +=1;
+                setNewVertexValue(new Tuple4<>(s0,s1,s2,diam));
+                sendMessageToAllNeighbors(new Tuple4<>(s0,s1,s2,diam));
 
-            if(N_new >= N_old*(1+e) || diam ==0){
-                setNewVertexValue(new Tuple4<>(s0,s1,s2,diam+1));
-                for (Edge<Long, NullValue> e : getEdges()) {
-                    sendMessageTo(e.getTarget(), vertex.getValue().copy());
-                }
             }
 
         }
+
 
 
     }
@@ -112,10 +121,12 @@ public class DiameterJava {
             sendCombinedMessage(t);
         }
     }
-    public static int lowestZero(Long bits){
+
+    public static double lowestZero(Long bits){
         Long zero = bits | (bits+1);
-        Long difference = ~(bits & zero);
-        int index = 64 - Long.numberOfLeadingZeros(difference.intValue());
+        Long difference = (bits ^ zero);
+
+        double index = 64 - Long.numberOfLeadingZeros(difference);
         return index;
     }
 }
