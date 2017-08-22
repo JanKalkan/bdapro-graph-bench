@@ -17,7 +17,7 @@ public class PageRank_Algorithm {
 		// Create execution environment
 		ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
-		DataSet<Edge<Integer, Double>> edges = env.readTextFile("/home/johannes/Dropbox/BDAPRO_Share/Datasets/ny.txt").filter(new FilterFunction<String>() {
+		DataSet<Edge<Integer, Double>> edges = env.readTextFile("/home/johannes/Downloads/usa.txt").filter(new FilterFunction<String>() {
 			@Override
 			public boolean filter(String value) throws Exception {
 				return value.startsWith("a");
@@ -39,7 +39,7 @@ public class PageRank_Algorithm {
 		}, env);
 		
 		//graph.run(new SingleSourceShortestPaths<Integer>(1, 20)).print();;
-		PageRank<Integer> pr = new PageRank<>(0.01, 20);
+		PageRank<Integer> pr = new PageRank<>(0.0001, 1);
 		pr.run(graph).print();
     }
 
