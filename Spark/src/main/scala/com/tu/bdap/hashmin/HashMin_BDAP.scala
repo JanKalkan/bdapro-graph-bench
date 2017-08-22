@@ -4,6 +4,7 @@ import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
 import org.apache.spark.graphx.Edge
 import org.apache.spark.graphx.Graph
+import org.apache.spark.graphx.EdgeDirection
 
 object HashMin_BDAP {
   def main(args: Array[String]) = {
@@ -16,12 +17,12 @@ object HashMin_BDAP {
     val sc = new SparkContext(conf)
 
     // Load the graph
-    val file = sc.textFile("C:/Users/Johannes/Desktop/ny_sub.txt")
+    val file = sc.textFile("/home/johannes/Downloads/test.txt")
       .filter { x => x.startsWith("a") }
       .map { line =>
         val fields = line.split(" ")
         Edge(fields(1).toInt, fields(2).toInt, fields(3).toInt)
-      }
+      }.flatMap(edge => Seq(Edge(edge.srcId,edge.dstId,0),Edge(edge.dstId,edge.srcId,0)))
 
     var graph = Graph.fromEdges(file, 1.toInt)
 
