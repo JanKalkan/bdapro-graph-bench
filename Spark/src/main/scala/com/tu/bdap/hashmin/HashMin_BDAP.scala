@@ -11,7 +11,7 @@ object HashMin_BDAP {
 
     //Start the Spark context
     val conf = new SparkConf()
-      .setAppName("PageRank")
+      .setAppName("HashMin")
       .setMaster("local")
 
     val sc = new SparkContext(conf)

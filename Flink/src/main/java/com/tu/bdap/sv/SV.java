@@ -40,6 +40,7 @@ public class SV {
     public static void main(String[] args) throws Exception {
 
         //Graph<Integer, Tuple2<Integer, Boolean>, NullValue>  graph = loadGraph("/home/jan/Documents/projects/datasets/smallgraph.txt", DataSetID.USA);
+    	
     	Graph<Integer, Tuple2<Integer, Boolean>, NullValue>  graph = loadGraph(args[0], Integer.parseInt(args[1]));
 
         graph = initializeParentVertices(graph);
@@ -411,8 +412,10 @@ public class SV {
                     @Override
                     public void flatMap(String value, Collector<Edge<Integer, NullValue>> out) throws Exception {
                         String[] values = value.split(" ");
-                        out.collect(new Edge<Integer, NullValue>(Integer.parseInt(values[0]), Integer.parseInt(values[1]),
-                                new NullValue()));
+                        if (Character.isDigit(values[0].charAt(0))) {
+                        	 out.collect(new Edge<Integer, NullValue>(Integer.parseInt(values[0]), Integer.parseInt(values[1]),
+                                     new NullValue()));
+						}              
                     }
                 });
 				break;
