@@ -13,6 +13,8 @@ import org.apache.flink.graph.pregel.MessageIterator;
 import org.apache.flink.types.NullValue;
 import org.apache.flink.util.Collector;
 
+import com.tu.bdap.utils.DataSetID;
+
 import java.util.Iterator;
 
 /**
@@ -37,8 +39,8 @@ public class SV {
      */
     public static void main(String[] args) throws Exception {
 
-//        Graph<Integer, Tuple2<Integer, Boolean>, NullValue>  graph = loadGraph("/home/jan/Documents/projects/datasets/NY_subset.txt");
-        Graph<Integer, Tuple2<Integer, Boolean>, NullValue>  graph = loadGraph(args[0]);
+        //Graph<Integer, Tuple2<Integer, Boolean>, NullValue>  graph = loadGraph("/home/jan/Documents/projects/datasets/smallgraph.txt", DataSetID.USA);
+    	Graph<Integer, Tuple2<Integer, Boolean>, NullValue>  graph = loadGraph(args[0], Integer.parseInt(args[1]));
 
         graph = initializeParentVertices(graph);
 
@@ -378,25 +380,43 @@ public class SV {
      * Create a graph such that, each vertex v keeps two fields: D[u] and Γout(u), where D[u] points
      * to the parent of u in the tree and is initialized as u (i.e., forming a self loop at u).
      */
-    private static Graph<Integer, Tuple2<Integer, Boolean>, NullValue> loadGraph(String path) {
+    private static Graph<Integer, Tuple2<Integer, Boolean>, NullValue> loadGraph(String path, int datasetID) {
 
             // Get execution environment
             ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
-            DataSet<Edge<Integer, NullValue>> edges = env.readTextFile(path)
-                    .filter(new FilterFunction<String>() {
-                        @Override
-                        public boolean filter(String value) throws Exception {
-                            return value.startsWith("a");
-                        }
-                    }).flatMap(new FlatMapFunction<String, Edge<Integer, NullValue>>() {
-                        @Override
-                        public void flatMap(String value, Collector<Edge<Integer, NullValue>> out) throws Exception {
-                            String[] values = value.split(" ");
-                            out.collect(new Edge<Integer, NullValue>(Integer.parseInt(values[1]), Integer.parseInt(values[2]),
-                                    new NullValue()));
-                        }
-                    });
+            DataSet<Edge<Integer, NullValue>> edges = null;
+            
+            switch (datasetID) {
+				case DataSetID.USA:
+					edges = env.readTextFile(path)
+	                .filter(new FilterFunction<String>() {
+	                    @Override
+	                    public boolean filter(String value) throws Exception {
+	                        return value.startsWith("a");
+	                    }
+	                }).flatMap(new FlatMapFunction<String, Edge<Integer, NullValue>>() {
+	                    @Override
+	                    public void flatMap(String value, Collector<Edge<Integer, NullValue>> out) throws Exception {
+	                        String[] values = value.split(" ");
+	                        out.collect(new Edge<Integer, NullValue>(Integer.parseInt(values[1]), Integer.parseInt(values[2]),
+	                                new NullValue()));
+	                    }
+	                });
+					break;
+
+			case DataSetID.TWITTER:
+				edges = env.readTextFile(path)
+                .flatMap(new FlatMapFunction<String, Edge<Integer, NullValue>>() {
+                    @Override
+                    public void flatMap(String value, Collector<Edge<Integer, NullValue>> out) throws Exception {
+                        String[] values = value.split(" ");
+                        out.collect(new Edge<Integer, NullValue>(Integer.parseInt(values[0]), Integer.parseInt(values[1]),
+                                new NullValue()));
+                    }
+                });
+				break;
+			}
 
             //Create graph and initialize the vertex value
             Graph<Integer, Tuple2<Integer, Boolean>, NullValue> graph = Graph.fromDataSet(edges, new MapFunction<Integer, Tuple2<Integer, Boolean>>() {
