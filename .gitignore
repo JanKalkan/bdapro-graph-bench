@@ -4,3 +4,4 @@
 /Flink/*.iml
 /Flink/target/*
 /bdapro-flink/*
+/bdapro-spark/*
