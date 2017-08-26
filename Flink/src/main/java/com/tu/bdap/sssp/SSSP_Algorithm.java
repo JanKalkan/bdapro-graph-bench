@@ -22,42 +22,42 @@ public class SSSP_Algorithm {
 		// Create execution environment
 		ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
-		DataSet<Edge<Integer, Double>> edges = env.readTextFile("/home/johannes/Downloads/test.txt")
+		DataSet<Edge<Long, Double>> edges = env.readTextFile("/home/johannes/Downloads/test.txt")
 				.filter(new FilterFunction<String>() {
 					@Override
 					public boolean filter(String value) throws Exception {
 						return value.startsWith("a");
 					}
-				}).flatMap(new FlatMapFunction<String, Edge<Integer, Double>>() {
+				}).flatMap(new FlatMapFunction<String, Edge<Long, Double>>() {
 					@Override
-					public void flatMap(String value, Collector<Edge<Integer, Double>> out) throws Exception {
+					public void flatMap(String value, Collector<Edge<Long, Double>> out) throws Exception {
 						String[] values = value.split(" ");
-						out.collect(new Edge<Integer, Double>(Integer.parseInt(values[1]), Integer.parseInt(values[2]),
+						out.collect(new Edge<Long, Double>(Long.parseLong(values[1]), Long.parseLong(values[2]),
 								Double.parseDouble(values[3])));
 					}
 				});
 
-		Graph<Integer, Double, Double> graph = Graph.fromDataSet(edges, new MapFunction<Integer, Double>() {
+		Graph<Long, Double, Double> graph = Graph.fromDataSet(edges, new MapFunction<Long, Double>() {
 			@Override
-			public Double map(Integer value) throws Exception {
-				return (double) value;
+			public Double map(Long value) throws Exception {
+				return Double.POSITIVE_INFINITY;
 			}
-		}, env).getUndirected();
+		}, env);
 		
 		final long srcVertexId = 1;
 
-		Graph<Integer, Double, Double> result = graph.runVertexCentricIteration(new SSSPComputeFunction(srcVertexId),
-				new SSSPCombiner(), 20);
-
+		Graph<Long, Double, Double> result = graph.runVertexCentricIteration(
+				new SSSPComputeFunction(srcVertexId), new SSSPCombiner(),
+Integer.MAX_VALUE);
 		// Extract the vertices as the result
-		DataSet<Vertex<Integer, Double>> singleSourceShortestPaths = result.getVertices();
+		DataSet<Vertex<Long, Double>> singleSourceShortestPaths = result.getVertices();
 
 		singleSourceShortestPaths.print();
 
 	}
 
 	@SuppressWarnings("serial")
-	public static final class SSSPComputeFunction extends ComputeFunction<Integer, Double, Double, Double> {
+	public static final class SSSPComputeFunction extends ComputeFunction<Long, Double, Double, Double> {
 
 		private final long srcId;
 
@@ -65,7 +65,7 @@ public class SSSP_Algorithm {
 			this.srcId = src;
 		}
 
-		public void compute(Vertex<Integer, Double> vertex, MessageIterator<Double> messages) {
+		public void compute(Vertex<Long, Double> vertex, MessageIterator<Double> messages) {
 
 			double minDistance = (vertex.getId().equals(srcId)) ? 0d : Double.POSITIVE_INFINITY;
 
@@ -75,19 +75,20 @@ public class SSSP_Algorithm {
 
 			if (minDistance < vertex.getValue()) {
 				setNewVertexValue(minDistance);
-				for (Edge<Integer, Double> e : getEdges()) {
+				for (Edge<Long, Double> e: getEdges()) {
 					sendMessageTo(e.getTarget(), minDistance + e.getValue());
 				}
 			}
 		}
 	}
 
+
 	/**
 	 * The messages combiner. Out of all messages destined to a target vertex,
 	 * only the minimum distance is propagated.
 	 */
 	@SuppressWarnings("serial")
-	public static final class SSSPCombiner extends MessageCombiner<Integer, Double> {
+	public static final class SSSPCombiner extends MessageCombiner<Long, Double> {
 
 		public void combineMessages(MessageIterator<Double> messages) {
 
