@@ -1,7 +1,5 @@
 package com.tu.bdap.sssp;
 
-import java.awt.print.Printable;
-
 import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.functions.MapFunction;
@@ -18,11 +16,10 @@ import org.apache.flink.util.Collector;
 public class SSSP_Algorithm {
 
 	public static void main(String[] args) throws Exception {
-
 		// Create execution environment
 		ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
-		DataSet<Edge<Long, Double>> edges = env.readTextFile("/home/johannes/Downloads/test.txt")
+		DataSet<Edge<Long, Double>> edges = env.readTextFile(args[0])
 				.filter(new FilterFunction<String>() {
 					@Override
 					public boolean filter(String value) throws Exception {
@@ -43,16 +40,16 @@ public class SSSP_Algorithm {
 				return Double.POSITIVE_INFINITY;
 			}
 		}, env);
-		
+
 		final long srcVertexId = 1;
 
-		Graph<Long, Double, Double> result = graph.runVertexCentricIteration(
-				new SSSPComputeFunction(srcVertexId), new SSSPCombiner(),
-Integer.MAX_VALUE);
+		Graph<Long, Double, Double> result = graph.runVertexCentricIteration(new SSSPComputeFunction(srcVertexId),
+				new SSSPCombiner(), 20);
 		// Extract the vertices as the result
 		DataSet<Vertex<Long, Double>> singleSourceShortestPaths = result.getVertices();
 
-		singleSourceShortestPaths.print();
+		singleSourceShortestPaths.collect();
+		
 
 	}
 
@@ -65,6 +62,7 @@ Integer.MAX_VALUE);
 			this.srcId = src;
 		}
 
+		@Override
 		public void compute(Vertex<Long, Double> vertex, MessageIterator<Double> messages) {
 
 			double minDistance = (vertex.getId().equals(srcId)) ? 0d : Double.POSITIVE_INFINITY;
@@ -75,13 +73,12 @@ Integer.MAX_VALUE);
 
 			if (minDistance < vertex.getValue()) {
 				setNewVertexValue(minDistance);
-				for (Edge<Long, Double> e: getEdges()) {
+				for (Edge<Long, Double> e : getEdges()) {
 					sendMessageTo(e.getTarget(), minDistance + e.getValue());
 				}
 			}
 		}
 	}
-
 
 	/**
 	 * The messages combiner. Out of all messages destined to a target vertex,
@@ -90,6 +87,7 @@ Integer.MAX_VALUE);
 	@SuppressWarnings("serial")
 	public static final class SSSPCombiner extends MessageCombiner<Long, Double> {
 
+		@Override
 		public void combineMessages(MessageIterator<Double> messages) {
 
 			double minMessage = Double.POSITIVE_INFINITY;
