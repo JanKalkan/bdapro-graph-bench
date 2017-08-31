@@ -25,9 +25,8 @@ object BMM {
         Edge(fields(0).toLong, -fields(1).toLong, 0)
       }
     var graph = Graph.fromEdges(edges, (0L, 0))
-    //println(graph.edges.collect.mkString("\n"))
     val result = graph.pregel[Long](0L, 20, EdgeDirection.Out)(compute, sendMsg, mergeMsg)
-    println(result.vertices.collect.mkString("\n"))
+    result.vertices.collect.mkString("\n")
   }
 
   def compute(id: VertexId, value: (Long, Int), message: Long): (Long, Int) = {
@@ -39,8 +38,7 @@ object BMM {
 
     // right node, 1st Superstep
     if (superstep == 1 & id < 0) {
-      println("1. id:"+id)
-      println(message)
+
       return (message, value._2 + 1)
     }
 
@@ -51,8 +49,7 @@ object BMM {
 
     // right node 3rd
     if (superstep == 3 & id < 0) {
-      println("id:"+id)
-      println(message)
+
       if (message == value._1 & message != 0) {
         return (message, value._2 + 1)
       }
@@ -64,13 +61,11 @@ object BMM {
   def sendMsg(triplet: EdgeTriplet[(Long, Int), Int]): Iterator[(VertexId, Long)] = {
 
     if (triplet.srcAttr._2 % 4 == 1 & triplet.srcAttr._1 == 0L & triplet.dstAttr._1 == 0L)  {
-      println("triplet 1"+triplet)
       return Iterator((triplet.srcId,0L),(triplet.dstId, triplet.srcId))
     }
 
 
     if (triplet.srcAttr._2 % 4 == 2) {
-      println("triplet 2"+triplet)
       if (triplet.dstAttr._1 == triplet.srcId & triplet.srcAttr._1 == 0L) {
         return Iterator((triplet.srcId, triplet.dstId), (triplet.dstId, 0L))
       }
