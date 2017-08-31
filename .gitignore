@@ -5,3 +5,7 @@
 /Flink/target/*
 /bdapro-flink/*
 /bdapro-spark/*
+
+*.jar
+
+

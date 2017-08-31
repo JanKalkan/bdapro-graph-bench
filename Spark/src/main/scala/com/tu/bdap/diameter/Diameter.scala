@@ -14,6 +14,7 @@ object Diameter {
   def main(args: Array[String]): Unit = {
     val conf = new SparkConf()
       .setAppName("Diameter")
+      .setMaster("local")
 
     val sc = new SparkContext(conf)
 
@@ -37,7 +38,7 @@ object Diameter {
     var graph = Graph.fromEdges(file, 0L)
 
     var count = graph.vertices.count()
-    val k = 64
+    val k = 32
 
     val g = graph.mapVertices((id, value) => {
       val r = Random
@@ -58,12 +59,15 @@ object Diameter {
         vprog,
         sendMsg,
         mergeMsg)
-    result.vertices.collect
+    println(result.vertices.collect.mkString("\n"))
+
 
   }
 
   val initialMsg = (0L, 0L, 0L, 0L)
   def vprog(id: VertexId, value: (Long, Long, Long, Long), message: (Long, Long, Long, Long)): (Long, Long, Long, Long) = {
+    val e = 0.05
+
     val v1 = value._1 | message._1
     val v2 = value._2 | message._2
     val v3 = value._3 | message._3
@@ -75,11 +79,15 @@ object Diameter {
     val oldN = pow(2, oldBit) / 0.77351
     val newN = pow(2, oldBit) / 0.77351
 
+    if(newN <= (1+e)*oldN & iteration > 1){
+      return (v1, v2, v3, -iteration)
+    }
     (v1, v2, v3, iteration)
   }
 
   def sendMsg(triplet: EdgeTriplet[(Long, Long, Long, Long), Long]): Iterator[(Long, (Long, Long, Long, Long))] = {
     val sourceVertex = triplet.srcAttr
+    if(sourceVertex._4 < 0) return Iterator.empty
     Iterator((triplet.dstId, sourceVertex))
   }
 
