@@ -6,7 +6,6 @@ import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple4;
-import org.apache.flink.graph.Edge;
 import org.apache.flink.graph.Graph;
 import org.apache.flink.graph.Vertex;
 import org.apache.flink.graph.pregel.ComputeFunction;
@@ -27,18 +26,36 @@ public class DiameterJava {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
+        //USA Dataset
+        
+//        DataSet<Tuple2<Long,Long>> edges = env.readTextFile(args[0])
+//                .filter(new FilterFunction<String>() {
+//                    @Override
+//                    public boolean filter(String s) throws Exception {
+//                        return s.startsWith("a");
+//                    }
+//                })
+//                .map(new MapFunction<String, Tuple2<Long,Long>>(){
+//                    @Override
+//                    public Tuple2<Long, Long> map(String value) throws Exception {
+//                        String[] s =value.split(" ");
+//                        return new Tuple2<>(Long.parseLong(s[1]),Long.parseLong(s[2]));
+//                    }
+//                });
+        
+        //Twitter DataSet
         DataSet<Tuple2<Long,Long>> edges = env.readTextFile(args[0])
                 .filter(new FilterFunction<String>() {
                     @Override
                     public boolean filter(String s) throws Exception {
-                        return s.startsWith("a");
+                        return Character.isDigit(s.charAt(0));
                     }
                 })
                 .map(new MapFunction<String, Tuple2<Long,Long>>(){
                     @Override
                     public Tuple2<Long, Long> map(String value) throws Exception {
                         String[] s =value.split(" ");
-                        return new Tuple2<>(Long.parseLong(s[1]),Long.parseLong(s[2]));
+                        return new Tuple2<>(Long.parseLong(s[0]),Long.parseLong(s[1]));
                     }
                 });
 
@@ -66,7 +83,7 @@ public class DiameterJava {
 
         graph = graph.runVertexCentricIteration(new ComputeDiameter(), new CombineDiameter(), 20 );
 
-        graph.getVertices().print();
+        graph.getVertices().collect();
         //graph.getVertices().writeAsText(args[1]);
     }
 
@@ -74,7 +91,8 @@ public class DiameterJava {
     public static final class ComputeDiameter extends ComputeFunction<Long, Tuple4<Long,Long,Long,Integer>, NullValue, Tuple4<Long,Long,Long,Integer>> {
 
         double e = 0.00;
-        public void compute(Vertex<Long, Tuple4<Long, Long, Long, Integer>> vertex, MessageIterator<Tuple4<Long, Long, Long, Integer>> messages) {
+        @Override
+		public void compute(Vertex<Long, Tuple4<Long, Long, Long, Integer>> vertex, MessageIterator<Tuple4<Long, Long, Long, Integer>> messages) {
 
             Tuple4<Long, Long, Long, Integer> vert = vertex.getValue();
             Long s0 = vert.f0;
@@ -108,7 +126,8 @@ public class DiameterJava {
 
     public static final class CombineDiameter  extends MessageCombiner<Long, Tuple4<Long, Long, Long, Integer>> {
 
-        public void combineMessages(MessageIterator<Tuple4<Long, Long, Long, Integer>> messages) {
+        @Override
+		public void combineMessages(MessageIterator<Tuple4<Long, Long, Long, Integer>> messages) {
 
             Tuple4<Long, Long, Long, Integer> t = new Tuple4(0L, 0L, 0L, 0);
             for (Tuple4<Long, Long, Long, Integer> msg: messages) {

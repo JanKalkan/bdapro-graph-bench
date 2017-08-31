@@ -17,19 +17,36 @@ public class PageRank_Algorithm {
 		// Create execution environment
 		ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
-		DataSet<Edge<Integer, Double>> edges = env.readTextFile("/home/johannes/Downloads/usa.txt").filter(new FilterFunction<String>() {
+		//USA Dataset
+//		DataSet<Edge<Integer, Double>> edges = env.readTextFile(args[0]).filter(new FilterFunction<String>() {
+//			@Override
+//			public boolean filter(String value) throws Exception {
+//				return value.startsWith("a");
+//			}
+//		}).flatMap(new FlatMapFunction<String, Edge<Integer, Double>>() {
+//			@Override
+//			public void flatMap(String value, Collector<Edge<Integer, Double>> out) throws Exception {
+//				String[] values = value.split(" ");
+//				out.collect(new Edge<Integer, Double>(Integer.parseInt(values[1]), Integer.parseInt(values[2]),
+//						Double.parseDouble(values[3])));
+//			}
+//		});
+		
+		//Twitter Dataset
+		DataSet<Edge<Integer, Double>> edges = env.readTextFile(args[0]).filter(new FilterFunction<String>() {
 			@Override
 			public boolean filter(String value) throws Exception {
-				return value.startsWith("a");
+				return Character.isDigit(value.charAt(0));
 			}
 		}).flatMap(new FlatMapFunction<String, Edge<Integer, Double>>() {
 			@Override
 			public void flatMap(String value, Collector<Edge<Integer, Double>> out) throws Exception {
 				String[] values = value.split(" ");
-				out.collect(new Edge<Integer, Double>(Integer.parseInt(values[1]), Integer.parseInt(values[2]),
-						Double.parseDouble(values[3])));
+				out.collect(new Edge<Integer, Double>(Integer.parseInt(values[0]), Integer.parseInt(values[1]),
+						1.0));
 			}
 		});
+		
 
 		Graph<Integer, Double, Double> graph = Graph.fromDataSet(edges, new MapFunction<Integer, Double>() {
 			@Override
@@ -38,9 +55,9 @@ public class PageRank_Algorithm {
 			}
 		}, env);
 		
-		//graph.run(new SingleSourceShortestPaths<Integer>(1, 20)).print();;
-		PageRank<Integer> pr = new PageRank<>(0.0001, 1);
-		pr.run(graph).print();
+		
+		PageRank<Integer> pr = new PageRank<>(0.85, 20);
+		pr.run(graph).collect();
     }
 
 }

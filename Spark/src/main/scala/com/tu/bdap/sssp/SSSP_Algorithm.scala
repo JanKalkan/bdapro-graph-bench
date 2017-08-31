@@ -12,19 +12,28 @@ import org.apache.spark.graphx.lib.ShortestPaths
 object SSSP_Algorithm {
   def main(args: Array[String]): Unit = {
 
+    val t1 = System.nanoTime
+
     //Start the Spark context
     val conf = new SparkConf()
       .setAppName("SSSP")
-      .setMaster("local")
 
     val sc = new SparkContext(conf)
 
-    // Load the graph
+    // USA Dataset
+//        val file = sc.textFile(args(0))
+//          .filter { x => x.startsWith("a") }
+//          .map { line =>
+//            val fields = line.split(" ")
+//            Edge(fields(1).toLong, fields(2).toLong, fields(3).toLong)
+//          }
+
+    // Twitter Dataset
     val file = sc.textFile(args(0))
-      .filter { x => x.startsWith("a") }
+      .filter { x => Character.isDigit(x.charAt(0)) }
       .map { line =>
         val fields = line.split(" ")
-        Edge(fields(1).toLong, fields(2).toLong, fields(3).toLong)
+        Edge(fields(0).toLong, fields(1).toLong, 1)
       }
 
     val graph = Graph.fromEdges(file, "")
@@ -34,7 +43,7 @@ object SSSP_Algorithm {
     val initialGraph = graph.mapVertices((id, _) =>
       if (id == sourceId) 0.0 else Double.PositiveInfinity)
 
-    val sssp = initialGraph.pregel(Double.PositiveInfinity)(
+    val sssp = initialGraph.pregel(Double.PositiveInfinity, 20)(
       (id, dist, newDist) => math.min(dist, newDist), // Vertex Program
       triplet => { // Send Message
         if (triplet.srcAttr + triplet.attr < triplet.dstAttr) {
@@ -47,7 +56,11 @@ object SSSP_Algorithm {
       )
 
     // Print the result
-    println(sssp.vertices.collect.mkString("\n"))
+    sssp.vertices.collect
+
+    val duration = (System.nanoTime - t1) / 1e9d
+
+    print("Time:" + duration)
 
   }
 }

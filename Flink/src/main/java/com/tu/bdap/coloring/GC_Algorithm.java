@@ -1,13 +1,11 @@
 package com.tu.bdap.coloring;
 
-import com.tu.bdap.pagerank.PageRank;
 import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;
-import org.apache.flink.api.java.tuple.Tuple4;
 import org.apache.flink.graph.*;
 import org.apache.flink.graph.pregel.ComputeFunction;
 import org.apache.flink.graph.pregel.MessageCombiner;
@@ -15,8 +13,6 @@ import org.apache.flink.graph.pregel.MessageIterator;
 import org.apache.flink.types.NullValue;
 
 import java.util.Random;
-
-import static java.lang.Math.pow;
 
 /**
  * Created by simon on 12.08.17..
@@ -26,18 +22,36 @@ public class GC_Algorithm {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
+        
+        //USA Dataset
+//        DataSet<Tuple2<Long,Long>> edges = env.readTextFile(args[0])
+//                .filter(new FilterFunction<String>() {
+//                    @Override
+//                    public boolean filter(String s) throws Exception {
+//                        return s.startsWith("a");
+//                    }
+//                })
+//                .map(new MapFunction<String, Tuple2<Long,Long>>(){
+//                    @Override
+//                    public Tuple2<Long, Long> map(String value) throws Exception {
+//                        String[] s =value.split(" ");
+//                        return new Tuple2<>(Long.parseLong(s[1]),Long.parseLong(s[2]));
+//                    }
+//                });
+        
+        //Twitter Dataset
         DataSet<Tuple2<Long,Long>> edges = env.readTextFile(args[0])
                 .filter(new FilterFunction<String>() {
                     @Override
                     public boolean filter(String s) throws Exception {
-                        return s.startsWith("a");
+                        return Character.isDigit(s.charAt(0));
                     }
                 })
                 .map(new MapFunction<String, Tuple2<Long,Long>>(){
                     @Override
                     public Tuple2<Long, Long> map(String value) throws Exception {
                         String[] s =value.split(" ");
-                        return new Tuple2<>(Long.parseLong(s[1]),Long.parseLong(s[2]));
+                        return new Tuple2<>(Long.parseLong(s[0]),Long.parseLong(s[1]));
                     }
                 });
 
@@ -91,7 +105,8 @@ public class GC_Algorithm {
     }
     public static final class ComputeGC extends ComputeFunction<Long,  Tuple3<Integer, Integer, Double>, Double, Tuple2<Long, Integer>> {
 
-        public void compute(Vertex<Long, Tuple3<Integer, Integer, Double>> vertex, MessageIterator<Tuple2<Long, Integer>> messages) {
+        @Override
+		public void compute(Vertex<Long, Tuple3<Integer, Integer, Double>> vertex, MessageIterator<Tuple2<Long, Integer>> messages) {
 
             Long min = Long.MAX_VALUE;
             int removedNeighbours = 0;
@@ -143,7 +158,8 @@ public class GC_Algorithm {
     }
     public static final class CombineGC  extends MessageCombiner<Long,  Tuple2<Long, Integer>> {
 
-        public void combineMessages(MessageIterator< Tuple2<Long, Integer>> messages) {
+        @Override
+		public void combineMessages(MessageIterator< Tuple2<Long, Integer>> messages) {
 
             Long min = Long.MAX_VALUE;
             int removedNeighbours = 0;

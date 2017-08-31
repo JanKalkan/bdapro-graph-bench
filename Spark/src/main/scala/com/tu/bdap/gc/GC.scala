@@ -13,12 +13,11 @@ import scala.util.Random
 object GC {
   def main(args: Array[String]): Unit = {
     val conf = new SparkConf()
-      .setAppName("Diameter")
-      .setMaster("local")
+      .setAppName("GC")
 
     val sc = new SparkContext(conf)
 
-    // Load the graph
+    // USA Dataset
     var edges = sc.textFile(args(0))
       .filter { x => x.startsWith("a") }
       .map { line =>
@@ -26,6 +25,15 @@ object GC {
         Edge(fields(1).toLong, fields(2).toLong, 0)
       }
     edges = edges.flatMap(edge => Seq(Edge(edge.srcId,edge.dstId,0),Edge(edge.dstId,edge.srcId,0)))
+    
+    // Twitter Dataset
+//    var edges = sc.textFile(args(0))
+//      .filter { x => Character.isDigit(x.charAt(0)) }
+//      .map { line =>
+//        val fields = line.split(" ")
+//        Edge(fields(0).toLong, fields(1).toLong, 0)
+//      }
+//    edges = edges.flatMap(edge => Seq(Edge(edge.srcId,edge.dstId,0),Edge(edge.dstId,edge.srcId,0)))
 
     //Graph.fromEdgeTuples(file,0L)
     var graph = Graph.fromEdges(edges, 0)
@@ -40,8 +48,8 @@ object GC {
     })
 
 
-    val result=gc.pregel[(VertexId,Int)](initialMsg ,30,EdgeDirection.Out)(compute,sendMsg,mergeMsg)
-    println(result.vertices.collect.mkString("\n"))
+    val result=gc.pregel[(VertexId,Int)](initialMsg ,20,EdgeDirection.Out)(compute,sendMsg,mergeMsg)
+   result.vertices.collect
 
   }
   val initialMsg = (Long.MaxValue,0)
