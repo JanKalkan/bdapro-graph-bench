@@ -49,7 +49,7 @@ public class SV {
 
         int count = 0;
 
-        while (!allTreesAreStars(graph) && count < 20) {
+        while (!allTreesAreStars(graph)) {
 
             count++;
 

@@ -25,19 +25,22 @@ public class SSSP_Algorithm {
 					public boolean filter(String value) throws Exception {
 						return value.startsWith("a");
 					}
-				}).flatMap(new FlatMapFunction<String, Edge<Long, Double>>() {
+				}).flatMap(new FlatMapFunction<String, Edge<Integer, Double>>() {
 					@Override
-					public void flatMap(String value, Collector<Edge<Long, Double>> out) throws Exception {
+					public void flatMap(String value, Collector<Edge<Integer, Double>> out) throws Exception {
 						String[] values = value.split(" ");
-						out.collect(new Edge<Long, Double>(Long.parseLong(values[1]), Long.parseLong(values[2]),
+						out.collect(new Edge<Integer, Double>(Integer.parseInt(values[1]), Integer.parseInt(values[2]),
 								Double.parseDouble(values[3])));
 					}
 				});
 
-		Graph<Long, Double, Double> graph = Graph.fromDataSet(edges, new MapFunction<Long, Double>() {
+		final int srcVertexId = 1;
+
+		Graph<Integer, Double, Double> graph = Graph.fromDataSet(edges, new MapFunction<Integer, Double>() {
 			@Override
-			public Double map(Long value) throws Exception {
-				return Double.POSITIVE_INFINITY;
+			public Double map(Integer value) throws Exception {
+				double distance =  Double.POSITIVE_INFINITY;
+				return distance;
 			}
 		}, env);
 
@@ -51,27 +54,28 @@ public class SSSP_Algorithm {
 		singleSourceShortestPaths.collect();
 		
 
+
 	}
 
 	@SuppressWarnings("serial")
-	public static final class SSSPComputeFunction extends ComputeFunction<Long, Double, Double, Double> {
+	public static final class SSSPComputeFunction extends ComputeFunction<Integer, Double, Double, Double> {
 
-		private final long srcId;
+		private final int srcId;
 
-		public SSSPComputeFunction(long src) {
+		public SSSPComputeFunction(int src) {
 			this.srcId = src;
 		}
 
 		@Override
 		public void compute(Vertex<Long, Double> vertex, MessageIterator<Double> messages) {
 
-			double minDistance = (vertex.getId().equals(srcId)) ? 0d : Double.POSITIVE_INFINITY;
+			double minDistance = (vertex.getId().equals(srcId)) ? 0 : Double.POSITIVE_INFINITY;
 
 			for (Double msg : messages) {
 				minDistance = Math.min(minDistance, msg);
 			}
 
-			if (minDistance < vertex.getValue()) {
+			if (minDistance <= vertex.getValue()) {
 				setNewVertexValue(minDistance);
 				for (Edge<Long, Double> e : getEdges()) {
 					sendMessageTo(e.getTarget(), minDistance + e.getValue());
@@ -85,7 +89,7 @@ public class SSSP_Algorithm {
 	 * only the minimum distance is propagated.
 	 */
 	@SuppressWarnings("serial")
-	public static final class SSSPCombiner extends MessageCombiner<Long, Double> {
+	public static final class SSSPCombiner extends MessageCombiner<Integer, Double> {
 
 		@Override
 		public void combineMessages(MessageIterator<Double> messages) {

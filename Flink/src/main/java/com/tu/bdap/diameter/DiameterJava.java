@@ -1,6 +1,7 @@
 package com.tu.bdap.diameter;
 
 import org.apache.flink.api.common.functions.FilterFunction;
+import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
@@ -12,6 +13,7 @@ import org.apache.flink.graph.pregel.ComputeFunction;
 import org.apache.flink.graph.pregel.MessageCombiner;
 import org.apache.flink.graph.pregel.MessageIterator;
 import org.apache.flink.types.NullValue;
+import org.apache.flink.util.Collector;
 
 import java.util.Random;
 
@@ -60,9 +62,9 @@ public class DiameterJava {
                 });
 
 
-        Graph graph = Graph.fromTuple2DataSet(edges,env);
+        Graph graph = Graph.fromDataSet(edges,env);
         //graph = graph.getUndirected();
-        final long k = 10L;
+        final long k = 32L;
         graph = graph.mapVertices(new MapFunction<Vertex<Long,NullValue>, Tuple4<Long,Long,Long,Integer>>() {
                     @Override
                     public Tuple4 map(Vertex<Long, NullValue> value) throws Exception {
@@ -79,7 +81,6 @@ public class DiameterJava {
                         return new Tuple4(s1,s2,s3,0);
                     }
                 });
-        //graph.getVertices().print();
 
         graph = graph.runVertexCentricIteration(new ComputeDiameter(), new CombineDiameter(), 20 );
 

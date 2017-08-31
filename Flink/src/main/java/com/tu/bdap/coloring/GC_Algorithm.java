@@ -1,6 +1,7 @@
 package com.tu.bdap.coloring;
 
 import org.apache.flink.api.common.functions.FilterFunction;
+import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
@@ -11,6 +12,7 @@ import org.apache.flink.graph.pregel.ComputeFunction;
 import org.apache.flink.graph.pregel.MessageCombiner;
 import org.apache.flink.graph.pregel.MessageIterator;
 import org.apache.flink.types.NullValue;
+import org.apache.flink.util.Collector;
 
 import java.util.Random;
 
@@ -56,14 +58,8 @@ public class GC_Algorithm {
                 });
 
 
-        Graph<Long, Double, Double> graph = Graph.fromTuple2DataSet(edges,env)
-                .mapEdges(new MapFunction<Edge<Long,NullValue>, Double>() {
-                    @Override
-                    public Double map(Edge<Long, NullValue> edge) throws Exception {
-                        return 1.0;
-                    }
-
-                }).mapVertices(new MapFunction<Vertex<Long, NullValue>, Double>() {
+        Graph graph = Graph.fromDataSet(edges,env)
+                .mapVertices(new MapFunction<Vertex<Long, NullValue>, Double>() {
                     @Override
                     public Double map(Vertex<Long, NullValue> vertex) throws Exception {
                         return 0.0;
@@ -92,6 +88,7 @@ public class GC_Algorithm {
         Graph<Long, Tuple3<Integer, Integer, Double>, Double> colour = gc.runVertexCentricIteration(new ComputeGC(), new CombineGC(), 50);
 
         colour.getVertices().print();
+        env.execute("GC");
 
     }
     static final class Gamma implements ReduceEdgesFunction<Double> {

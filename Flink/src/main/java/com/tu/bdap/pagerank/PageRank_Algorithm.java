@@ -8,6 +8,7 @@ import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.graph.Edge;
 import org.apache.flink.graph.Graph;
 import org.apache.flink.graph.library.PageRank;
+import org.apache.flink.types.NullValue;
 import org.apache.flink.util.Collector;
 
 public class PageRank_Algorithm {
