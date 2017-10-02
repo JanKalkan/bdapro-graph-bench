@@ -6,8 +6,15 @@ import org.apache.spark.graphx.Graph
 
 import com.tu.bdap.utils.DataSetLoader
 
-//This algorithm computes the shortest path to all other nodes from one source vertex
+/** This algorithm computes the shortest path to all other nodes from one source vertex.
+  * It propagates the currently known distance to the source vertex to all neighbours.
+  * Each vertex updates its value, if a smaller value is received.
+  */
 object SSSP_BDAP {
+  /**
+    * Loads a graph from local disk or hdfs and calculates the shortest path from all vertices to a source vertex
+    * @param args args[0] should contain path, args[1] is an integer identifying the dataset
+    */
   def main(args: Array[String]): Unit = {
 
     //Start the Spark context

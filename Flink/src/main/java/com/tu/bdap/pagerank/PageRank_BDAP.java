@@ -10,9 +10,18 @@ import org.apache.flink.graph.library.PageRank;
 import com.tu.bdap.utils.DataSetID;
 import com.tu.bdap.utils.DatasetLoader;
 
-//This algorithm computes the importance of every node in a graph
+/**
+ * This algorithm computes the importance of every node in a graph
+ * according to the PageRank formula
+ *
+ */
 public class PageRank_BDAP {
 
+	/**
+	 * Loads a graph from local disk or hdfs and calculates PageRank values for all vertices
+	 * @param args args[0] should contain path, args[1] is an integer identifying the dataset
+	 * @throws Exception
+	 */
 	public static void main(String[] args) throws Exception {
 
 		// Initialize DataSetPath and DataSet

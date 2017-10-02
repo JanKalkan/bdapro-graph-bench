@@ -7,7 +7,9 @@ import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.graph.Edge;
 import org.apache.flink.util.Collector;
 
-//This class loads Graph-DataSets from HDFS or local disk storage
+/**
+ * This class loads Graph-DataSets from HDFS or local disk storage
+ */
 public class DatasetLoader {
 	
 	
@@ -33,7 +35,12 @@ public class DatasetLoader {
 				return edges;
 	}
 	
-	
+	/**
+	 * 	Load USA dataset
+	 * @param path path to dataset
+	 * @param env Execution environment 
+	 * @return Edges of resulting graph
+	 */
 	public static DataSet<Edge<Long, Double>> loadUsaLong(String path, ExecutionEnvironment env)
 	{
 		
@@ -57,6 +64,12 @@ public class DatasetLoader {
 		
 	}
 	
+	/**
+	 * 	Load LiveJournal dataset
+	 * @param path path to dataset
+	 * @param env Execution environment 
+	 * @return Edges of resulting graph
+	 */
 	public static DataSet<Edge<String, String>> loadLiveJournal(String path, ExecutionEnvironment env)
 	{
 		
@@ -78,7 +91,12 @@ public class DatasetLoader {
 				return edges;
 		
 	}
-	
+	/**
+	 * 	Load Twitter dataset with Long IDs
+	 * @param path path to dataset
+	 * @param env Execution environment 
+	 * @return Edges of resulting graph
+	 */
 	public static DataSet<Edge<Long, Double>> loadTwitterLong(String path, ExecutionEnvironment env)
 	{
 		
@@ -102,6 +120,12 @@ public class DatasetLoader {
 		
 	}
 	
+	/**
+	 * 	Load Twitter dataset with Integer IDs
+	 * @param path path to dataset
+	 * @param env Execution environment 
+	 * @return Edges of resulting graph
+	 */
 	public static DataSet<Edge<Integer, Double>> loadTwitterInt(String path, ExecutionEnvironment env)
 	{
 		
@@ -124,7 +148,12 @@ public class DatasetLoader {
 				return edges;
 		
 	}
-	
+	/**
+	 * 	Load Friendster dataset with Integer IDs
+	 * @param path path to dataset
+	 * @param env Execution environment 
+	 * @return Edges of resulting graph
+	 */
 	public static DataSet<Edge<Integer, Double>> loadFriendsterInt(String path, ExecutionEnvironment env)
 	{
 		
@@ -147,7 +176,12 @@ public class DatasetLoader {
 				return edges;
 		
 	}
-	
+	/**
+	 * 	Load Friendster dataset with Long IDs
+	 * @param path path to dataset
+	 * @param env Execution environment 
+	 * @return Edges of resulting graph
+	 */
 	public static DataSet<Edge<Long, Double>> loadFriendsterLong(String path, ExecutionEnvironment env)
 	{
 		

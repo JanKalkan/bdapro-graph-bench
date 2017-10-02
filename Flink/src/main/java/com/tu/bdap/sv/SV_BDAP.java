@@ -20,7 +20,8 @@ import org.apache.flink.util.Collector;
 import com.tu.bdap.utils.DataSetID;
 
 /**
- * Created by jan on 09.08.17
+ * The Shiloach-Vishkin's Algorithm (SV) calculates connected components (CC)
+ * by creating trees for each CC. 
  */
 public class SV_BDAP {
 
@@ -36,7 +37,7 @@ public class SV_BDAP {
     final static Integer NEW_PARENT_ID            = 8;
 
     /**
-     * Main method for executing the SV algorithm on the NY dataset
+     * Main method for executing the SV algorithm
      * @param args
      */
     public static void main(String[] args) throws Exception {
@@ -159,8 +160,8 @@ public class SV_BDAP {
     }//End: computeStarAssignment()
 
     /**
-     *  Returns true if all star[v] is true for all v€V
-     * @param graph
+     *  Returns true if all star[v] is true for all v in V
+     * @param graph 
      * @return boolean
      */
     public static boolean allTreesAreStars(Graph<Integer, Tuple2<Integer, Boolean>, NullValue> graph) throws Exception {

@@ -20,9 +20,18 @@ import java.util.Random;
 import static java.lang.Math.pow;
 
 /**
- * Created by simon on 12.08.17..
- */
+ * Graph Colouring assigns each vertex a colour, <br>
+ * so all neighbouring vertices have different colours. <br>
+ * Vertices randomly decide to pick a colour. <br>
+ * If neighbouring vertices simultaneously pick a colour, <br>
+ * the one with the smallest ID gets priority
+*/
 public class GC_BDAP {
+	/**
+	 * Loads a graph from local disk or hdfs and executes Graph Colouring 
+	 * @param args args[0] should contain path, args[1] is an integer identifying the dataset
+	 * @throws Exception
+	 */
 	public static void main(String[] args) throws Exception {
 
 		// Initialize DataSetPath and DataSet
@@ -111,8 +120,10 @@ public class GC_BDAP {
 					}
 				});
 
+		// transform the graph into an undirected one
 		Graph gc = graph.getUndirected();
 
+		// execute vertex-centric iteration
 		Graph<Long, Tuple2<Integer, Integer>, Double> colour = gc.runVertexCentricIteration(new ComputeGC(),
 				new CombineGC(), numIterations);
 
@@ -120,17 +131,24 @@ public class GC_BDAP {
 
 	}
 
-	static final class Gamma implements ReduceEdgesFunction<Double> {
-		@Override
-		public Double reduceEdges(Double firstEdgeValue, Double secondEdgeValue) {
-			double sum = firstEdgeValue + secondEdgeValue;
-			return sum;
-		}
-	}
 
+	/**
+	 * The Compute-function randomly assigns colours to the given vertex <br>
+	 * and sends it status to the neighbor vertices. Each vertex stores
+	 * two values: the assigned colour and the status. <br>
+	 * Unassigned vertices have status -1, <br>
+	 * tentative vertices have status 0, <br>
+	 * assigned vertices have status 1 <br>
+	 */
 	public static final class ComputeGC
 			extends ComputeFunction<Long, Tuple2<Integer, Integer>, Double, Tuple2<Long, Integer>> {
 
+		/**
+		 * During each superstep randomly decide to pick a colour and  give yourself a tentative status <br>
+		 * If neighbours decide simultaneously to pick a colour, the vertex with the lowest id has priority 
+		 * @param vertex The specific vertex, on which the Compute-function is called, the tuple contains colour and status of the vertex
+		 * @param messages received messages from previous superstep
+		 */
 		public void compute(Vertex<Long, Tuple2<Integer, Integer>> vertex,
 				MessageIterator<Tuple2<Long, Integer>> messages) {
 
@@ -139,6 +157,8 @@ public class GC_BDAP {
 			}
 			Long min = Long.MAX_VALUE;
 			int aliveNeighbours = 0;
+			
+			// count neighbours that don't have an assigned colour
 			for (Tuple2<Long, Integer> msg : messages) {
 				if (msg.f0 < min) {
 					min = msg.f0;
@@ -148,7 +168,6 @@ public class GC_BDAP {
 				}
 			}
 
-			// select tentative node
 			Random r = new Random();
 			int colour = getSuperstepNumber();
 			int status = -1;
@@ -158,6 +177,7 @@ public class GC_BDAP {
 			}
 			int neighbours = aliveNeighbours;
 
+			// if there are no neighbours left assign a colour
 			if (neighbours == 0) {
 				status = 1;
 				setNewVertexValue(new Tuple2<>(colour, status));
@@ -166,18 +186,22 @@ public class GC_BDAP {
 
 			// resolve conflict
 			if (vertex.getValue().f1 == 0 & getSuperstepNumber() > 2) {
+				// if all neighbouring nodes have a higher id,
+				// then the current node has the right of way to pick the colour
 				if (min > vertex.getId()) {
 					colour = vertex.getValue().f0;
 					setNewVertexValue(new Tuple2<>(colour, 1));
 					sendMessageToAllNeighbors(new Tuple2<>(Long.MAX_VALUE, 0));
 					return;
-				} else {
+				} 
+				else {
 					setNewVertexValue(new Tuple2<>(colour, 0));
 					sendMessageToAllNeighbors(new Tuple2<>(vertex.getId(), 1));
 					return;
 				}
 			}
 
+			// select tentative node randomly, pick current superstep as colour
 			if (r.nextDouble() <= 1.0 / (2. * neighbours)) {
 				setNewVertexValue(new Tuple2<>(colour, 0));
 				sendMessageToAllNeighbors(new Tuple2<>(vertex.getId(), 1));
@@ -190,6 +214,10 @@ public class GC_BDAP {
 		}
 	}
 
+	/**
+	 * The Message Combiner for Graph Colouring sums all active neighbours and <br>
+	 * keeps track of the smallest vertex id. The combiner reduces network traffic among cluster nodes.
+	 */
 	public static final class CombineGC extends MessageCombiner<Long, Tuple2<Long, Integer>> {
 
 		public void combineMessages(MessageIterator<Tuple2<Long, Integer>> messages) {

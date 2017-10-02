@@ -8,8 +8,15 @@ import org.apache.spark.graphx.lib.PageRank
 import com.tu.bdap.utils.DataSetLoader
 
 
-//This algorithm computes the importance of every node in a graph
+/**
+  * This algorithm computes the relevance of every node in a graph <br>
+  * by using the PageRank formula
+  */
 object PageRank_BDAP {
+  /**
+    * Loads a graph from local disk or hdfs and calculates PageRank value for each vertex
+    * @param args args[0] should contain path, args[1] is an integer identifying the dataset
+    */
   def main(args: Array[String]): Unit = {
 
 

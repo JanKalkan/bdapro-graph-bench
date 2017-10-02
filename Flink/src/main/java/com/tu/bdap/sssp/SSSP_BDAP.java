@@ -13,9 +13,16 @@ import org.apache.flink.graph.pregel.MessageIterator;
 import com.tu.bdap.utils.DataSetID;
 import com.tu.bdap.utils.DatasetLoader;
 
-//This algorithm computes the shortest path to all other nodes from one source vertex
+/**
+ * This algorithm computes the shortest path to all other nodes from one source vertex
+ */
 public class SSSP_BDAP {
 
+	/**
+	 * Loads a graph from local disk or hdfs and calculates the shortest path to all vertices given a source
+	 * @param args args[0] should contain path, args[1] is an integer identifying the dataset
+	 * @throws Exception
+	 */
 	public static void main(String[] args) throws Exception {
 
 		// Define scrVertexID
@@ -83,6 +90,11 @@ public class SSSP_BDAP {
 
 	}
 
+	/**
+	 * The Compute-Function calculates the distance to a certain node
+	 * given the information of its neighbours.
+	 *
+	 */
 	@SuppressWarnings("serial")
 	public static final class SSSPComputeFunction extends ComputeFunction<Long, Double, Double, Double> {
 
@@ -92,6 +104,12 @@ public class SSSP_BDAP {
 			this.srcId = src;
 		}
 
+		/**
+		 * Each vertex calculates the distance to the source vertex.
+		 * Whenever a neghbour sends a shorter distance, update the currently stored distance. 
+		 * @param vertex current vertex
+		 * @param messages incoming messages that contain distance to source node
+		 */
 		@Override
 		public void compute(Vertex<Long, Double> vertex, MessageIterator<Double> messages) {
 

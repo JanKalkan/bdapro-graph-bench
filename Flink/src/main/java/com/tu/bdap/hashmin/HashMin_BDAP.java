@@ -13,9 +13,17 @@ import com.tu.bdap.utils.DataSetID;
 import com.tu.bdap.utils.DatasetLoader;
 
 
-//This algorithm computes connected components by sending the lowest vertex-id to all neighbours
+/**
+ * This algorithm computes connected components by sending the lowest vertex-id to all neighbours
+ * 
+ */
 public class HashMin_BDAP {
 
+	/**
+	 * Loads a graph from local disk or hdfs and calculates CC using HashMin
+	 * @param args args[0] should contain path, args[1] is an integer identifying the dataset
+	 * @throws Exception
+	 */
 	public static void main(String[] args) throws Exception {
 
 		// Initialize DataSetPath and DataSet
@@ -82,8 +90,18 @@ public class HashMin_BDAP {
 
 	}
 
+	/**
+	 * The Compute Function calculates Connected Components by propagating the minimal 
+	 * vertex ID. Every node in a certain CC will have the same value stored after convergence of
+	 * the algorithm
+	 */
 	public static final class HashMinComputeFunction extends ComputeFunction<Integer, Double, Double, Double> {
 
+		/**
+		 * Each vertex stores lowest received ID and sends it to all its neighbours.
+		 * @param vertex current vertex
+		 * @param messages received IDs from neighbours
+		 */
 		@Override
 		public void compute(Vertex<Integer, Double> vertex, MessageIterator<Double> messages) {
 
@@ -99,7 +117,7 @@ public class HashMin_BDAP {
 				for (Double msg : messages) {
 					minMessage = Math.min(minMessage, msg);
 				}
-				// If the smallest vertex-id which was recived is smaller than the
+				// If the smallest vertex-id which was received is smaller than the
 				// current one, update it and send to all neighbours again
 				if (minMessage < vertex.getValue()) {
 					setNewVertexValue(minMessage);

@@ -11,9 +11,13 @@ import org.apache.spark.graphx._
 import com.tu.bdap.utils.DataSetLoader
 
 /**
- * Created by simon on 8/26/17.
+ * Calculate maximal matching in a bipartite Graph
  */
 object BMM_BDAP {
+  /**
+    * Loads a graph from local disk or hdfs and calculates BMM
+    * @param args args[0] should contain path, args[1] is an integer identifying the dataset
+    */
   def main(args: Array[String]): Unit = {
     val conf = new SparkConf()
       .setAppName("BMM")
@@ -51,12 +55,21 @@ object BMM_BDAP {
     result.vertices.collect()
   }
 
+  /**
+   * Calculate assignment with a four-way handshake. <br>
+    * 1. left vertices send match request <br>
+    * 2. right vertices accept exactly one request and send an ACC<br>
+    * 3. left vertices choose at most one accepted request and send confirmation<br>
+    * 4. right vertices receive either a confirmation or are unassigned
+   * @param id current vertex id: left nodes have positive sign, right nodes have negative sign
+   * @param value stores assigned partner vertex ID and assignment status
+   */
   def compute(id: VertexId, value: (Long, Int), message: Long): (Long, Int) = {
     val superstep = value._2 % 4
 
+    // left node, 0th Superstep
     if (superstep == 0 & value._1 != 0L) return value
 
-    // left node, 0th Superstep
 
     // right node, 1st Superstep
     if (superstep == 1 & id < 0) {
@@ -77,12 +90,19 @@ object BMM_BDAP {
     return (value._1, value._2 + 1)
   }
 
+  /** Send message based on current superstep <br>
+    * Vertices always send their ID to matching nodes.
+    * @param triplet triplets describing edge and adjacent vetices
+    * @return Iterator containing all created messages
+    */
   def sendMsg(triplet: EdgeTriplet[(Long, Int), Long]): Iterator[(VertexId, Long)] = {
 
+    //1st superstep
     if (triplet.srcAttr._2 % 4 == 1 & triplet.srcAttr._1 == 0L & triplet.dstAttr._1 == 0L) {
       return Iterator((triplet.srcId, 0L), (triplet.dstId, triplet.srcId))
     }
 
+    //2nd superstep
     if (triplet.srcAttr._2 % 4 == 2) {
       if (triplet.dstAttr._1 == triplet.srcId & triplet.srcAttr._1 == 0L) {
         return Iterator((triplet.srcId, triplet.dstId), (triplet.dstId, 0L))
@@ -91,6 +111,7 @@ object BMM_BDAP {
       }
     }
 
+    //3rd superstep
     if (triplet.srcAttr._2 % 4 == 3) {
       if (triplet.srcAttr._1 == triplet.dstId & triplet.srcAttr._1 != 0L) {
         return Iterator((triplet.dstId, triplet.srcId), (triplet.srcId, 0L))
@@ -98,6 +119,7 @@ object BMM_BDAP {
         return Iterator((triplet.dstId, Long.MaxValue), (triplet.srcId, 0))
       }
     }
+    // 4th superstep
     if (triplet.srcAttr._2 % 4 == 0) {
       if (triplet.srcAttr._1 != 0L) {
         return Iterator.empty
@@ -108,6 +130,13 @@ object BMM_BDAP {
     Iterator.empty
   }
 
+  /** An associative and commutative function, that combines messages. <br>
+    * By merging all incoming messages to the smallest value <br>
+    * vertices always pick the one with the smallest ID
+    * @param msg1 1st message
+    * @param msg2 2nd message
+    * @return smaller message of both inputs
+    */
   def mergeMsg(msg1: Long, msg2: Long): Long = {
     min(msg1, msg2)
   }

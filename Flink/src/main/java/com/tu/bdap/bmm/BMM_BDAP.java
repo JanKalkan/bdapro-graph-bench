@@ -12,9 +12,17 @@ import org.apache.flink.graph.pregel.MessageIterator;
 import com.tu.bdap.utils.DataSetID;
 import com.tu.bdap.utils.DatasetLoader;
 
-//This algorithm computes a bipartit maximal matching
+/**
+ * This algorithm computes a bipartite maximal matching.
+ *
+ */
 public class BMM_BDAP {
 
+	/**
+	 * Loads a graph from local disk or hdfs and calculates BMM
+	 * @param args args[0] should contain path, args[1] is an integer identifying the dataset
+	 * @throws Exception
+	 */
 	public static void main(String[] args) throws Exception {
 
 		// Initialize DataSetPath and DataSet
@@ -71,10 +79,20 @@ public class BMM_BDAP {
 
 	}
 
-	@SuppressWarnings("serial")
+	
+	/** Calculate assignment with a four-way handshake. <br>
+    * 1. left vertices send match request <br>
+    * 2. right vertices accept exactly one request and send an accept-message<br>
+    * 3. left vertices choose at most one accepted request and send confirmation<br>
+    * 4. right vertices receive either a confirmation or are unassigned
+	 */
 	public static final class BMMComputeFunction extends ComputeFunction<String, String, String, String> {
 
 		@Override
+		/**
+		 * Calculates match and message based on current superstep
+		 * @param vertex current vertex: contains ID and (temporally) matched partner ID as Strings
+		 */
 		public void compute(Vertex<String, String> vertex, MessageIterator<String> messages) {
 
 			// First Superstep
