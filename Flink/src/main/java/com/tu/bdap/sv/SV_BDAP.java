@@ -71,7 +71,7 @@ public class SV_BDAP {
     }//End: main()
 
     /**
-     *
+     * Compute the star assignment for the current graph.
      * @param graph
      */
     public static Graph computeStarAssignment(Graph graph) {
@@ -160,7 +160,7 @@ public class SV_BDAP {
     }//End: computeStarAssignment()
 
     /**
-     *  Returns true if all star[v] is true for all v in V
+     * Returns true if all star[v] is true for all v in V
      * @param graph 
      * @return boolean
      */
@@ -186,7 +186,7 @@ public class SV_BDAP {
     }//End: allTreesAreStars()
 
     /**
-     *
+     * Executes the tree hooking for the current graph.
      * @param graph
      */
     public static Graph treeHooking(Graph graph) {
@@ -259,7 +259,7 @@ public class SV_BDAP {
     }//End: treeHooking()
 
     /**
-     *
+     * Executes the star hooking for the current graph.
      * @param graph
      */
     public static Graph starHooking(Graph graph) {
@@ -311,7 +311,7 @@ public class SV_BDAP {
     }//End: starHooking()
 
     /**
-     *
+     * Exectues the shortcutting on the current graph.
      * @param graph
      */
     public static Graph shortCutting(Graph graph) {
@@ -353,7 +353,9 @@ public class SV_BDAP {
     }//End: shortCutting()
 
     /**
-     *
+     * Initializes the parent vertex value, such that each vertex is the parent <br>  
+     * of itself or a setting the neighbor as parent if the neighbor's vertex ID <br>
+     * is smaller than the one of the respective vertex.
      * @param graph
      */
     public static Graph initializeParentVertices(Graph graph) {
